@@ -6,6 +6,7 @@
 (define-constant err-template-exists (err u101))
 (define-constant err-template-not-found (err u102))
 (define-constant err-unauthorized (err u103))
+(define-constant err-invalid-code (err u104))
 
 ;; Data vars
 (define-data-var admin principal contract-owner)
@@ -31,7 +32,18 @@
   }
 )
 
-;; Template Management
+;; Helper functions
+(define-private (validate-code (code (string-utf8 4096)))
+  (match (find ";" code)
+    found false  ;; Reject if contains comments
+    (match (find "}" code)
+      found true ;; Basic validation - must contain braces
+      false
+    )
+  )
+)
+
+;; Template Management  
 (define-public (register-template 
   (template-id uint) 
   (name (string-ascii 64))
@@ -39,6 +51,7 @@
   (begin
     (asserts! (is-eq tx-sender (var-get admin)) err-unauthorized)
     (asserts! (is-none (map-get? templates {template-id: template-id})) err-template-exists)
+    (asserts! (validate-code code) err-invalid-code)
     (ok (map-set templates
       {template-id: template-id}
       {
