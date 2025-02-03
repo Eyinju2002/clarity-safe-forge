@@ -18,7 +18,7 @@ Clarinet.test({
         [
           types.uint(1),
           types.ascii("Test Template"),
-          types.utf8("(contract-code)")
+          types.utf8("(contract-code {...})")
         ],
         admin.address
       )
@@ -38,12 +38,32 @@ Clarinet.test({
         [
           types.uint(1),
           types.ascii("Test Template"),
-          types.utf8("(contract-code)")
+          types.utf8("(contract-code {...})")
         ],
         user.address
       )
     ]);
     result.receipts[0].result.expectErr(types.uint(103));
+  },
+});
+
+Clarinet.test({
+  name: "Ensure template code validation works",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const admin = accounts.get("wallet_1")!;
+    const result = chain.mineBlock([
+      Tx.contractCall(
+        "safe-forge", 
+        "register-template",
+        [
+          types.uint(1),
+          types.ascii("Invalid Template"),
+          types.utf8(";; Invalid code")
+        ],
+        admin.address
+      )
+    ]);
+    result.receipts[0].result.expectErr(types.uint(104));
   },
 });
 
